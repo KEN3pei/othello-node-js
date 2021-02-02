@@ -117,10 +117,12 @@ io.of('/Gamespace').on('connection', socket => {
                 // その時の盤面を取得して別画面にリダイレクト
 
                 // redisにあるデータの削除
-                Redis.deleteRoomnamesOfRoomname(roomname)
-                Redis.deleteOthellosRoom(roomname)
-                Redis.deletePlayerStatus(roomname)
-                await Redis.deleteRoomStatus(roomname)
+                const result = await Promise.all([
+                    Redis.deleteRoomnamesOfRoomname(roomname),
+                    Redis.deleteOthellosRoom(roomname),
+                    Redis.deletePlayerStatus(roomname),
+                    Redis.deleteRoomStatus(roomname)
+                ])
                 // roomからの退出
                 // socket.leave()
                 // Mysqlに永続化

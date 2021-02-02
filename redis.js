@@ -99,6 +99,7 @@ module.exports.deleteRoomStatus = async (roomname) => {
         throw new Error('not equel cookie_id or already exists player')
     }
 }
+
 // roomname で player を取得
 module.exports.getPlayerStatus = async (roomname) => {
     try{
