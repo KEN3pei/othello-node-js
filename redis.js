@@ -33,7 +33,7 @@ module.exports.existCheckRoomnamesofMember = async (roomname) => {
         const reply = await Client.sismember(['roomNames', roomname])
         if(!reply){ throw new Error()}
     }catch(err){
-        throw new Error("existCheckRoomnamesofMember is error this roomname is not member !")
+        throw new Error("existCheckRoomnamesofMember is error !")
     }
 }
 // roomNames内のroomnameを削除する

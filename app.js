@@ -114,7 +114,6 @@ io.of('/Gamespace').on('connection', socket => {
 
                 console.log("ゲーム終了")
                 // ゲーム終了
-                // その時の盤面を取得して別画面にリダイレクト
 
                 // redisにあるデータの削除
                 const result = await Promise.all([
@@ -123,8 +122,6 @@ io.of('/Gamespace').on('connection', socket => {
                     Redis.deletePlayerStatus(roomname),
                     Redis.deleteRoomStatus(roomname)
                 ])
-                // roomからの退出
-                // socket.leave()
                 // Mysqlに永続化
 
                 // 別URLに飛ばす
@@ -147,7 +144,7 @@ io.of('/Gamespace').on('connection', socket => {
 io.of('/roomList').on('connection', async socket => {
     const roomMembers = await Redis.getRoomnamesMembers()
     for (let room of roomMembers){
-        socket.emit('setRoomNames', `<p><a id="roomLink" onclick="joinThisRoom()">${room}</a></p>`)
+        socket.emit('setRoomNames', room)
     }
     // room作成時重複しなければjoin&room作成&全ユーザに配信
     socket.on('createRoom', async (name) => {
@@ -155,8 +152,7 @@ io.of('/roomList').on('connection', async socket => {
             const roomMembers = await Redis.addRoomnamesAndGetMembers(name)
             socket.broadcast.emit('deleteRoomNames')
             for (let room of roomMembers){
-                socket.broadcast.emit('setRoomNames', 
-                    `<p><a id="roomLink" onclick="joinThisRoom()">${room}</a></p>`)
+                socket.broadcast.emit('setRoomNames', room)
             }
         }catch(err){
             console.log('エラー')

@@ -9,7 +9,7 @@ socket.on('message', message => {
     console.log(message)
 })
 socket.on('setRoomNames', names => {
-    roomnames.innerHTML += names
+    roomnames.innerHTML += `<li class="roomname" onclick="joinThisRoom()">${names}</li>`
     console.log(names)
 })
 socket.on('deleteRoomNames', names => {

@@ -47,7 +47,7 @@ socket.on('viewOthello', (array) => {
 
 // rooms.htmlにて表示される
 function htmlFromOthello(array){
-    let html = "<table border='1' style='border-collapse: collapse'>"
+    let html = "<table border='1'>"
     for (let y = 1; y < 5 ; y++) {
         html += "<tr>"
         for (let x = 1; x < 5 ; x++) {
