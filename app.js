@@ -7,17 +7,17 @@ const io = require('socket.io')(http)
 const session = require('express-session')
 
 // Mysql接続
-const mysql = require('mysql')
-const con = mysql.createConnection({
-    host: 'localhost',
-    user: 'ken',
-    password: '',
-    database: 'othelloExpress'
-})
-con.connect((err) => {
-    if (err) throw err;
-    console.log('Mysql Connected');
-})
+// const mysql = require('mysql')
+// const con = mysql.createConnection({
+//     host: 'localhost',
+//     user: 'ken',
+//     password: '',
+//     database: 'othelloExpress'
+// })
+// con.connect((err) => {
+//     if (err) throw err;
+//     console.log('Mysql Connected');
+// })
 
 // session管理
 const sessionMiddleware = session({

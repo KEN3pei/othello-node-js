@@ -1,6 +1,6 @@
 // Redis接続
 const redis = require('ioredis')
-const Client = redis.createClient()
+const Client = redis.createClient(6379, 'redis')
 Client.on('connect', function() {
     console.log('Redisに接続しました')
 })

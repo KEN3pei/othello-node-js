@@ -1,0 +1,3 @@
+cd /Applications/medis
+npm run-script build
+npm start
