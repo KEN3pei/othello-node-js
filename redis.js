@@ -1,7 +1,7 @@
 // Redis接続
 const redis = require('ioredis')
-const Client = redis.createClient()
-// const Client = redis.createClient(6379, 'redis')
+// const Client = redis.createClient()
+const Client = redis.createClient(6379, 'redis')
 Client.on('connect', function() {
     console.log('Redisに接続しました')
 })
@@ -67,7 +67,7 @@ module.exports.deleteOthellosRoom = async (roomname) => {
         throw new Error("deleteOthellosRoom is error")
     }
 }
-// 初期値をsetするための関数
+// redisにすでに値がなければ初期値をset&get, あればあるものをget
 module.exports.setIniarrayAndGetOthello = async (room, iniarray) => {
     try{
         await Client.hsetnx(["othellos", room, JSON.stringify(iniarray)])

@@ -4,8 +4,6 @@ const express = require('express')
 const app = express()
 const http = require('http').Server(app)
 const io = require('socket.io')(http)
-// const session = require('express-session')
-
 
 // Mysql接続
 // const mysql = require('mysql')
@@ -46,21 +44,19 @@ io.of('/Gamespace').on('connection', socket => {
             const player = name[1].slice(7)
 
             await Redis.existCheckRoomnamesofMember(roomname)
-            // { player1,2 : cookie_login_id }でplayerの管理をする
-            const result = await Redis.createRoomStatusAndGetRoomStatus(roomname, Number(player), socket.id)
+            await Redis.createRoomStatusAndGetRoomStatus(roomname, Number(player), socket.id)
+            
             socket.join(roomname)
-            // redisにすでに値がなければ初期値をset&get, あればあるものをget
             const othello = await Redis.setIniarrayAndGetOthello(roomname, rogic.iniArray())
-          
             socket.emit('viewOthello', JSON.parse(othello), player)
+
             // defaultのゲーム開始時のユーザを設定
-            const reply = await Redis.createPlayerStatus(roomname, player)
+            await Redis.createPlayerStatus(roomname, player)
             const playerStatus = await Redis.getPlayerStatus(roomname)
             socket.emit('setPlayerInfo', playerStatus)
             
         }catch(err){
             console.log(err)
-            // ここでリダイレクト処理か戻るボタンを表示するevent発火させる
             socket.emit('href', '/rooms.html')
         }
     })
@@ -88,7 +84,7 @@ io.of('/Gamespace').on('connection', socket => {
                 socket.emit('deleteEvent', putxandy)
 
                 player = 3 - Number(player)
-                const reply = await Redis.updatePlayerStatus(roomname, player)
+                await Redis.updatePlayerStatus(roomname, player)
 
                 // socket.to(roomname).emit('viewOthello', JSON.parse(updatedArray), player)
                 socket.emit('viewOthello', JSON.parse(updatedArray), player)
@@ -103,7 +99,7 @@ io.of('/Gamespace').on('connection', socket => {
             if(nextplayerCount === 0){
                 console.log("ゲーム終了")
                 // delete room data
-                const result = await Promise.all([
+                await Promise.all([
                     Redis.deleteRoomnamesOfRoomname(roomname),
                     Redis.deleteOthellosRoom(roomname),
                     Redis.deletePlayerStatus(roomname),
@@ -137,10 +133,10 @@ io.of('/Gamespace').on('connection', socket => {
         const player2Id = await Redis.getRoomStatus(dataWhenDisconnecting[1], 2)
         if(player1Id === dataWhenDisconnecting[0]){
             // delete処理
-            const reply = await Redis.deleteRoomStatusOfPlayer(dataWhenDisconnecting[1], 1)
+            await Redis.deleteRoomStatusOfPlayer(dataWhenDisconnecting[1], 1)
             socket.to(socket.id).emit('connect')
         }else if(player2Id === dataWhenDisconnecting[0]){
-            const reply = await Redis.deleteRoomStatusOfPlayer(dataWhenDisconnecting[1], 2)
+            await Redis.deleteRoomStatusOfPlayer(dataWhenDisconnecting[1], 2)
             socket.to(socket.id).emit('connect')
         }
     })
