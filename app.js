@@ -48,21 +48,22 @@ io.of('/Gamespace').on('connection', socket => {
             
             socket.join(roomname)
             const othello = await Redis.setIniarrayAndGetOthello(roomname, rogic.iniArray())
-            socket.emit('viewOthello', JSON.parse(othello), player)
+            socket.emit('makeOthelloTable', JSON.parse(othello), player)
 
             // defaultのゲーム開始時のユーザを設定
             await Redis.createPlayerStatus(roomname, player)
             const playerStatus = await Redis.getPlayerStatus(roomname)
-            socket.emit('setPlayerInfo', playerStatus)
+            socket.emit('settingCurrentPlayer', playerStatus)
+            socket.to(roomname).broadcast.emit('settingCurrentPlayer', playerStatus)
             
         }catch(err){
             console.log(err)
             socket.emit('href', '/rooms.html')
         }
     })
-    socket.on('checkPlayer', async (roomname, cb) => {
-        const playerStatus = await Redis.getPlayerStatus(roomname)
-        cb(playerStatus)
+    socket.on('getCurrentPlayer', async (roomname, cb) => {
+        const currentPlayer = await Redis.getPlayerStatus(roomname)
+        cb(currentPlayer)
     })
 
     socket.on('startGame', async (elem_id, player, roomname) => {
@@ -80,17 +81,17 @@ io.of('/Gamespace').on('connection', socket => {
             if(othelloArray !== JSON.stringify(result)){
                 const updatedArray = await Redis.updateOthellosAndGetOthellos(roomname, result)
                 // Eventdelete
-                const putxandy = await rogic.xandyPutarray(JSON.parse(othelloArray), player)
-                socket.emit('deleteEvent', putxandy)
+                const clickEventArray = await rogic.arrayPutOnClickEventFunc(JSON.parse(othelloArray), player)
+                socket.emit('deleteEvent', clickEventArray)
 
                 player = 3 - Number(player)
                 await Redis.updatePlayerStatus(roomname, player)
 
-                // socket.to(roomname).emit('viewOthello', JSON.parse(updatedArray), player)
-                socket.emit('viewOthello', JSON.parse(updatedArray), player)
-                socket.to(roomname).broadcast.emit('viewOthello', JSON.parse(updatedArray), player)
-                socket.emit('setPlayerInfo', player)
-                socket.to(roomname).broadcast.emit('setPlayerInfo', player)
+                // socket.to(roomname).emit('makeOthelloTable', JSON.parse(updatedArray), player)
+                socket.emit('makeOthelloTable', JSON.parse(updatedArray), player)
+                socket.to(roomname).broadcast.emit('makeOthelloTable', JSON.parse(updatedArray), player)
+                socket.emit('settingCurrentPlayer', player)
+                socket.to(roomname).broadcast.emit('settingCurrentPlayer', player)
             }
         }else{
             // playerを変えても0か調べる
@@ -112,16 +113,16 @@ io.of('/Gamespace').on('connection', socket => {
                 socket.to(roomname).broadcast.emit('href', `/finished?name=${roomname}&player=${player}`)
             }else{
                 const reply = await Redis.updatePlayerStatus(roomname, player)
-                socket.emit('viewOthello', JSON.parse(othelloArray), player)
-                socket.to(roomname).broadcast.emit('viewOthello', JSON.parse(othelloArray), player)
-                socket.emit('setPlayerInfo', player)
-                socket.to(roomname).broadcast.emit('setPlayerInfo', player)
+                socket.emit('makeOthelloTable', JSON.parse(othelloArray), player)
+                socket.to(roomname).broadcast.emit('makeOthelloTable', JSON.parse(othelloArray), player)
+                socket.emit('settingCurrentPlayer', player)
+                socket.to(roomname).broadcast.emit('settingCurrentPlayer', player)
             }
         }
     })
-    socket.on('getHtml', async (html, array, player) => {
-        const putxandy = await rogic.xandyPutarray(array, player)
-        socket.emit('setOthelloHtml', `${html}`, putxandy)
+    socket.on('getClickEventArray', async (html, array, player) => {
+        const clickEventArray = await rogic.arrayPutOnClickEventFunc(array, player)
+        socket.emit('showOthelloTable', `${html}`, clickEventArray)
     })
     socket.on('disconnecting', async (reason) => {
         console.log(reason)
