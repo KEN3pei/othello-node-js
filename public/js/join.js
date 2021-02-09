@@ -29,9 +29,6 @@ socket.on('message2', message => {
 socket.on('addHtml', html => {
     div.innerHTML += html
 })
-socket.on('setOthelloHtml', html => {
-    othelloHtml.innerHTML = html
-})
 socket.on('setPlayerInfo', player => {
     playerhtml.innerHTML = `player${player}の番です`
 })
@@ -41,8 +38,8 @@ socket.on('disconnect', (reason) => {
     console.log(reason)
 })
 
-socket.on('viewOthello', (array) => {
-    socket.emit('getHtml', htmlFromOthello(array))
+socket.on('viewOthello', (array, player) => {
+    socket.emit('getHtml', htmlFromOthello(array), array, player)
 })
 
 // rooms.htmlにて表示される
@@ -53,11 +50,11 @@ function htmlFromOthello(array){
         for (let x = 1; x < 5 ; x++) {
             let x_y = `x:${x},y:${y}`
             if(array[y][x] === 1){
-                html += `<td id = "${x_y}" class="icon othello" onclick="getXandY(this.id)">●</td>`
+                html += `<td id = "${x_y}" class="icon othello">●</td>`
             }else if(array[y][x] === 2){
-                html += `<td id = "${x_y}" class="icon othello" onclick="getXandY(this.id)">◯</td>`
+                html += `<td id = "${x_y}" class="icon othello">◯</td>`
             }else{
-                html += `<td id = "${x_y}" class="icon othello" onclick="getXandY(this.id)">&emsp;</td>`
+                html += `<td id = "${x_y}" class="icon othello">&emsp;</td>`
             }
         }
         html += "</tr>"
@@ -66,23 +63,52 @@ function htmlFromOthello(array){
     return html
 }
 
-function getXandY(id){
-    console.log(id)
+socket.on('setOthelloHtml', (html, putxandy) => {
+    othelloHtml.innerHTML = html
+    const urlArray = url.slice(1).split('&')
+    const roomname = urlArray[0].slice(5)
+    const urlplayer = urlArray[1].slice(7)
+    socket.emit('checkPlayer', roomname, (status) => {
+        // console.log(status, typeof status, urlplayer)
+        if(Number(status) === Number(urlplayer)){
+            if(putxandy.length === 0){
+                socket.emit('getMessage', '置くところがないのでplayerを交代します')
+                // 最初からあると他の人も見えてしまう
+                document.getElementById('btn').style.display = "block"
+            }else{
+                document.getElementById('btn').style.display = "none"
+            }
+            for (let index = 0; index < putxandy.length; index++) {
+                let id = `x:${putxandy[index][1]},y:${putxandy[index][0]}`
+                document.getElementById(id).addEventListener('click', {id: id, handleEvent: getXandY});
+                document.getElementById('btn').addEventListener('click', {id: 'x:0,y:0', handleEvent: getXandY});
+            }
+        }
+    })
+})
+
+socket.on('deleteEvent', (putxandy) => {
+    for (let index = 0; index < putxandy.length; index++) {
+        let id = `x:${putxandy[index][1]},y:${putxandy[index][0]}`
+        document.getElementById(id).removeEventListener('click', {id: id, handleEvent: getXandY});
+    }
+})
+
+function getXandY(event){
     const urlArray = url.slice(1).split('&')
     const player = urlArray[1].slice(7)
     const roomname = urlArray[0].slice(5)
     // roomnameにあるplayerStatusと一致するか確認する
-    socket.emit('checkPlayer', roomname)
-    socket.on('result', playerStatus => {
-        // console.log(playerStatus, elem.id.split(','), player, roomname)
+    socket.emit('checkPlayer', roomname, (playerStatus) => {
         if(playerStatus === player){
-            socket.emit('startGame', id.split(','), player, roomname)
+            socket.emit('startGame', this.id.split(','), player, roomname)
         }else{
             socket.emit('getMessage', `player${playerStatus}が操作中です`)
         }
     })
     return
 }
+
 socket.on('reload', () => {
     location.reload()
 })

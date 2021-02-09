@@ -4,7 +4,8 @@ const express = require('express')
 const app = express()
 const http = require('http').Server(app)
 const io = require('socket.io')(http)
-const session = require('express-session')
+// const session = require('express-session')
+
 
 // Mysql接続
 // const mysql = require('mysql')
@@ -18,18 +19,6 @@ const session = require('express-session')
 //     if (err) throw err;
 //     console.log('Mysql Connected');
 // })
-
-// session管理
-const sessionMiddleware = session({
-    secret: 'keyboard cat',
-    resave: false,
-    saveUninitialized: false,
-    // store: new RedisStore({ client: Client }),
-    cookie: { httpOnly: true, secure: false, maxage: 1000 * 60 * 30 }
-})
-io.use((socket, next) => {
-    sessionMiddleware(socket.request, socket.request.res || {}, next)
-})
 
 // jsファイルをmoduleとして読み込み
 const Redis = require('./redis.js')
@@ -48,27 +37,22 @@ app.get('/finished', (req, res) => {
 
 // socket.io使用
 io.of('/Gamespace').on('connection', socket => {
-    socket.on('getHtml', html => {
-        socket.emit('setOthelloHtml', `${html}`)
-    })
     socket.on('getMessage', message => {
         socket.emit('message', message)
     })
-    socket.on('joinRoom', async (name, cookie) => {
+    socket.on('joinRoom', async (name) => {
         try{
             const roomname = name[0].slice(5)
             const player = name[1].slice(7)
-            const cookie_login_id = cookie.allCookies.split(';')[0].slice(6) 
 
             await Redis.existCheckRoomnamesofMember(roomname)
             // { player1,2 : cookie_login_id }でplayerの管理をする
-            const players = await Redis.createRoomStatusAndGetRoomStatus(roomname, player, cookie_login_id)
+            const result = await Redis.createRoomStatusAndGetRoomStatus(roomname, Number(player), socket.id)
             socket.join(roomname)
             // redisにすでに値がなければ初期値をset&get, あればあるものをget
             const othello = await Redis.setIniarrayAndGetOthello(roomname, rogic.iniArray())
           
-            console.log('namespace2')
-            socket.emit('viewOthello', JSON.parse(othello))
+            socket.emit('viewOthello', JSON.parse(othello), player)
             // defaultのゲーム開始時のユーザを設定
             const reply = await Redis.createPlayerStatus(roomname, player)
             const playerStatus = await Redis.getPlayerStatus(roomname)
@@ -80,42 +64,45 @@ io.of('/Gamespace').on('connection', socket => {
             socket.emit('href', '/rooms.html')
         }
     })
-    socket.on('checkPlayer', async (roomname) => {
+    socket.on('checkPlayer', async (roomname, cb) => {
         const playerStatus = await Redis.getPlayerStatus(roomname)
-        socket.emit('result', playerStatus)
+        cb(playerStatus)
     })
+
     socket.on('startGame', async (elem_id, player, roomname) => {
         const x = Number(elem_id[0].slice(2))
         const y = Number(elem_id[1].slice(2))
         const othelloArray = await Redis.client.hget("othellos", roomname)
 
-        // 1, 更新前に置くところがあるかcheck
+        // count place to put it
         const count = await rogic.countOthelloSet(JSON.parse(othelloArray), Number(player))
+
         if(count !== 0){
-            // 2, 置く場所があればそのまま処理&最後にplayerの更新
-            // 盤面の更新
+            // get updated othello
             const result = await rogic.allSettledOthello(x, y, JSON.parse(othelloArray), Number(player))
-            // 盤面が変更されたらredisのplayerと盤面の更新
+            // redis & Browser update
             if(othelloArray !== JSON.stringify(result)){
                 const updatedArray = await Redis.updateOthellosAndGetOthellos(roomname, result)
+                // Eventdelete
+                const putxandy = await rogic.xandyPutarray(JSON.parse(othelloArray), player)
+                socket.emit('deleteEvent', putxandy)
+
                 player = 3 - Number(player)
                 const reply = await Redis.updatePlayerStatus(roomname, player)
-                // 変更後の盤面を表示
-                socket.emit('viewOthello', JSON.parse(updatedArray))
-                socket.broadcast.emit('viewOthello', JSON.parse(updatedArray))
-                socket.broadcast.emit('reload')
+
+                // socket.to(roomname).emit('viewOthello', JSON.parse(updatedArray), player)
+                socket.emit('viewOthello', JSON.parse(updatedArray), player)
+                socket.to(roomname).broadcast.emit('viewOthello', JSON.parse(updatedArray), player)
+                socket.emit('setPlayerInfo', player)
+                socket.to(roomname).broadcast.emit('setPlayerInfo', player)
             }
-            socket.emit('reload')
         }else{
             // playerを変えても0か調べる
             player = 3 - Number(player)
             const nextplayerCount = await rogic.countOthelloSet(JSON.parse(othelloArray), Number(player))
             if(nextplayerCount === 0){
-
                 console.log("ゲーム終了")
-                // ゲーム終了
-
-                // redisにあるデータの削除
+                // delete room data
                 const result = await Promise.all([
                     Redis.deleteRoomnamesOfRoomname(roomname),
                     Redis.deleteOthellosRoom(roomname),
@@ -124,20 +111,38 @@ io.of('/Gamespace').on('connection', socket => {
                 ])
                 // Mysqlに永続化
 
-                // 別URLに飛ばす
+                // fin
                 socket.emit('href', `/finished?name=${roomname}&player=${player}`)
-                socket.broadcast.emit('href', `/finished?name=${roomname}&player=${player}`)
+                socket.to(roomname).broadcast.emit('href', `/finished?name=${roomname}&player=${player}`)
             }else{
                 const reply = await Redis.updatePlayerStatus(roomname, player)
-                socket.emit('message2', `置くところがないのでplayerを交代します`)
-                socket.broadcast.emit('message2', `置くところがないのでplayerを交代します`)
+                socket.emit('viewOthello', JSON.parse(othelloArray), player)
+                socket.to(roomname).broadcast.emit('viewOthello', JSON.parse(othelloArray), player)
                 socket.emit('setPlayerInfo', player)
-                socket.broadcast.emit('setPlayerInfo', player)
+                socket.to(roomname).broadcast.emit('setPlayerInfo', player)
             }
         }
     })
-    socket.on('disconnecting', (reason) => {
+    socket.on('getHtml', async (html, array, player) => {
+        const putxandy = await rogic.xandyPutarray(array, player)
+        socket.emit('setOthelloHtml', `${html}`, putxandy)
+    })
+    socket.on('disconnecting', async (reason) => {
         console.log(reason)
+        let dataWhenDisconnecting = []
+        socket.rooms.forEach((value) => {
+            dataWhenDisconnecting.push(value)
+        })
+        const player1Id = await Redis.getRoomStatus(dataWhenDisconnecting[1], 1)
+        const player2Id = await Redis.getRoomStatus(dataWhenDisconnecting[1], 2)
+        if(player1Id === dataWhenDisconnecting[0]){
+            // delete処理
+            const reply = await Redis.deleteRoomStatusOfPlayer(dataWhenDisconnecting[1], 1)
+            socket.to(socket.id).emit('connect')
+        }else if(player2Id === dataWhenDisconnecting[0]){
+            const reply = await Redis.deleteRoomStatusOfPlayer(dataWhenDisconnecting[1], 2)
+            socket.to(socket.id).emit('connect')
+        }
     })
 })
 

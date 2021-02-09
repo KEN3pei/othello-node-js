@@ -1,6 +1,7 @@
 // Redis接続
 const redis = require('ioredis')
-const Client = redis.createClient(6379, 'redis')
+const Client = redis.createClient()
+// const Client = redis.createClient(6379, 'redis')
 Client.on('connect', function() {
     console.log('Redisに接続しました')
 })
@@ -16,7 +17,7 @@ module.exports.addRoomnamesAndGetMembers = async (roomname) => {
         const roomMembers = await Client.smembers('roomNames')
         return roomMembers
     }catch(err){
-        throw new Error("memberが重複しています")
+        throw new Error("err addRoomnamesAndGetMembers")
     }
 }
 module.exports.getRoomnamesMembers = async () =>{
@@ -24,7 +25,7 @@ module.exports.getRoomnamesMembers = async () =>{
         const roomMembers = await Client.smembers('roomNames')
         return roomMembers
     }catch(err){
-        throw new Error("roomMembers is not found")
+        throw new Error("err getRoomnamesMembers")
     }
 } 
 // roomNames内の特定のmemberが存在するか確認する
@@ -63,7 +64,7 @@ module.exports.deleteOthellosRoom = async (roomname) => {
         const reply = await Client.hdel(["othellos", roomname])
         return reply
     }catch(err){
-        throw new Error("updateOthellosAndGetOthellos is error")
+        throw new Error("deleteOthellosRoom is error")
     }
 }
 // 初期値をsetするための関数
@@ -77,18 +78,32 @@ module.exports.setIniarrayAndGetOthello = async (room, iniarray) => {
     }
 }
 
-// roomname:{ player1,2 : cookie_id } で管理 Hash型
-module.exports.createRoomStatusAndGetRoomStatus = async (roomname, player, cookie_id) => {
+// roomname:{ player1,2 : socketId } で管理 Hash型
+module.exports.createRoomStatusAndGetRoomStatus = async (roomname, player, socketId) => {
     try{
-        const reply = await Client.hsetnx([roomname, player, cookie_id])
-        // すでにそのroomにplayerがsetされている場合、cookie_idが同じならOK
-        if(!reply){
-            const setedCookie = await Client.hget([roomname, player])
-            if(cookie_id !== setedCookie){ throw new Error('エラー') }
-        }
+        const reply = await Client.hsetnx([roomname, player, socketId])
+        // すでにそのroomにplayerがsetされている場合reject
+        if(!reply){ throw new Error('reply === 0')}
         return reply
     }catch(err){
-        throw new Error('not equel cookie_id or already exists player')
+        throw new Error('err createRoomStatusAndGetRoomStatus')
+    }
+}
+// 指定roomのplayer1か2のsocketId取得
+module.exports.getRoomStatus = async (roomname, player) => {
+    try{
+        const reply = await Client.hget([roomname, player])
+        return reply
+    }catch(err){
+        throw new Error('err getRoomStatus')
+    }
+}
+module.exports.deleteRoomStatusOfPlayer = async (roomname, player) => {
+    try{
+        const reply = await Client.hdel([roomname, player])
+        return reply
+    }catch(err){
+        throw new Error('err deleteRoomStatusOfPlayer')
     }
 }
 module.exports.deleteRoomStatus = async (roomname) => {
@@ -96,7 +111,7 @@ module.exports.deleteRoomStatus = async (roomname) => {
         const reply = await Client.del(roomname)
         return reply
     }catch(err){
-        throw new Error('not equel cookie_id or already exists player')
+        throw new Error('err deleteRoomStatus')
     }
 }
 
@@ -106,7 +121,7 @@ module.exports.getPlayerStatus = async (roomname) => {
         const playerStatus = await Client.hget(["players", roomname])
         return playerStatus
     }catch(err){
-        console.log(err)
+        console.log('err getPlayerStatus')
     }
 }
 // roomname で player を設置 既存の値なら0, そうでなければ1
@@ -115,7 +130,7 @@ module.exports.createPlayerStatus = async (roomname, player) => {
         const reply = await Client.hsetnx(["players", roomname, player])
         return reply // 1=true 0=false
     }catch(err){
-        console.log(err)
+        console.log('err createPlayerStatus')
     }
 }
 // player を 1->2 もしくは 2->1 にする
@@ -124,7 +139,7 @@ module.exports.updatePlayerStatus = async (roomname, player) => {
         const reply = await Client.hset(["players", roomname, player])
         return reply // 新規->1 更新->0
     }catch(err){
-        console.log(err)
+        console.log('err updatePlayerStatus')
     }
 }
 // 一致したplayer情報を削除
@@ -133,6 +148,6 @@ module.exports.deletePlayerStatus = async (roomname) => {
         const reply = await Client.hdel(["players", roomname])
         return reply // 存在している->1 していない->2
     }catch(err){
-        console.log(err)
+        console.log('err deletePlayerStatus')
     }
 }

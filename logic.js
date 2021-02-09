@@ -37,10 +37,31 @@ exports.countOthelloSet = async (array, player) => {
             nextArray = await module.exports.allSettledOthello(x, y, array, player)
             if(JSON.stringify(prevArray) !== JSON.stringify(nextArray)){ 
                 othellocount += 1 
+                // console.log('y = ', y, 'x = ', x)
             }
         }  
     }
     return othellocount
+}
+// 置ける場所を配列にして返す関数
+exports.xandyPutarray = async (array, player) => {
+    let h = 6
+    let w = 6
+    let prevArray = []
+    array.forEach(element => {
+        prevArray.push(element.slice())
+    })
+    let putxandy = []
+    for (let y = 1; y < h - 1; y++) {
+        for (let x = 1; x < w - 1; x++) {
+            nextArray = await module.exports.allSettledOthello(x, y, array, player)
+            if(JSON.stringify(prevArray) !== JSON.stringify(nextArray)){ 
+                putxandy.push([y, x])
+                // console.log('y = ', y, 'x = ', x)
+            }
+        }  
+    }
+    return putxandy
 }
 
 // -----------------------------------------
