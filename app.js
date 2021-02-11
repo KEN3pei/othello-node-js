@@ -24,9 +24,17 @@ const rogic = require('./logic.js')
 const iniarray = rogic.iniArray()
 
 // 静的ファイル配信
-app.use(express.static(__dirname + '/public'))
+app.use(express.static(__dirname + '/views'))
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
+// テンプレート読み込み
+app.set('view engine', 'pug')
+app.get('/join', (req, res) => {
+    res.render('join', { title: 'join' })
+})
+app.get('/rooms', (req, res) => {
+    res.render('rooms', { title: 'rooms' })
+})
 
 app.get('/finished', (req, res) => {
     const roomname = req.query.name
@@ -35,6 +43,7 @@ app.get('/finished', (req, res) => {
 
 // socket.io使用
 io.of('/Gamespace').on('connection', socket => {
+    socket.emit('afterConnecting')
     socket.on('getMessage', message => {
         socket.emit('message', message)
     })
@@ -58,14 +67,13 @@ io.of('/Gamespace').on('connection', socket => {
             
         }catch(err){
             console.log(err)
-            socket.emit('href', '/rooms.html')
+            socket.emit('href', '/rooms')
         }
     })
     socket.on('getCurrentPlayer', async (roomname, cb) => {
         const currentPlayer = await Redis.getPlayerStatus(roomname)
         cb(currentPlayer)
     })
-
     socket.on('startGame', async (elem_id, player, roomname) => {
         const x = Number(elem_id[0].slice(2))
         const y = Number(elem_id[1].slice(2))

@@ -1,0 +1,15 @@
+doctype html
+html
+  head
+    title= title
+    link(rel="stylesheet" href="/css/style.css" type="text/css")
+  body
+    div.create-room-form
+      label create Roomname : 
+      input#myroom(type="text" name="myRoom")
+      button(onclick="onClickSubmit()") create
+    div#addForm
+    div.rooms
+      ui#roomNames
+    script(src="/socket.io/socket.io.js")
+    script(src='/js/rooms.js' type="text/javascript")

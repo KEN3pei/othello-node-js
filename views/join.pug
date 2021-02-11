@@ -1,0 +1,17 @@
+doctype html
+html
+  head
+    title= title
+    link(rel="stylesheet" href="./css/style.css" type="text/css")
+  body
+    div.gameroom
+      p Game Room
+      div#othello
+      div#joinedDiv
+      div#player
+      div#messageArea
+      div#messageArea2
+      div#btn(style={display: "none"})
+        button playerを変更
+    script(src="/socket.io/socket.io.js")
+    script(src='./js/join.js' type="text/javascript")
