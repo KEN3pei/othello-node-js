@@ -5,19 +5,6 @@ const app = express()
 const http = require('http').Server(app)
 const io = require('socket.io')(http)
 
-// Mysql接続
-// const mysql = require('mysql')
-// const con = mysql.createConnection({
-//     host: 'localhost',
-//     user: 'ken',
-//     password: '',
-//     database: 'othelloExpress'
-// })
-// con.connect((err) => {
-//     if (err) throw err;
-//     console.log('Mysql Connected');
-// })
-
 // jsファイルをmoduleとして読み込み
 const Redis = require('./redis.js')
 const rogic = require('./logic.js')
@@ -28,6 +15,7 @@ app.use(express.static(__dirname + '/views'))
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 // テンプレート読み込み
+app.engine('pug', require('pug').__express) // docker環境だとこの行がないと表示されない
 app.set('view engine', 'pug')
 app.get('/join', (req, res) => {
     res.render('join', { title: 'join' })
@@ -35,10 +23,9 @@ app.get('/join', (req, res) => {
 app.get('/rooms', (req, res) => {
     res.render('rooms', { title: 'rooms' })
 })
-
 app.get('/finished', (req, res) => {
     const roomname = req.query.name
-    res.json(roomname + "is Game 終了")
+    res.render('finished', { title: 'finished' })
 })
 
 // socket.io使用
@@ -47,11 +34,8 @@ io.of('/Gamespace').on('connection', socket => {
     socket.on('getMessage', message => {
         socket.emit('message', message)
     })
-    socket.on('joinRoom', async (name) => {
+    socket.on('joinRoom', async (roomname, player) => {
         try{
-            const roomname = name[0].slice(5)
-            const player = name[1].slice(7)
-
             await Redis.existCheckRoomnamesofMember(roomname)
             await Redis.createRoomStatusAndGetRoomStatus(roomname, Number(player), socket.id)
             
@@ -70,32 +54,44 @@ io.of('/Gamespace').on('connection', socket => {
             socket.emit('href', '/rooms')
         }
     })
-    socket.on('getCurrentPlayer', async (roomname, cb) => {
+    socket.on('getCurrentPlayertohundler', async (roomname, eventName) => {
         const currentPlayer = await Redis.getPlayerStatus(roomname)
-        cb(currentPlayer)
+        socket.emit(eventName, currentPlayer)
+    })
+    socket.on('chengePlayerFunc' , async (roomname, player) => {
+        const othelloArray = await Redis.client.hget("othellos", roomname)
+        player = 3 - Number(player)
+        await Redis.updatePlayerStatus(roomname, player)
+
+        const count = await rogic.countOthelloSet(JSON.parse(othelloArray), Number(player))
+        if(count === 0){
+            console.log("ゲーム終了")
+            // Mysqlに永続化
+            // fin
+            socket.emit('finishEvent')
+            socket.to(roomname).emit('finishEvent')
+        }else{
+            socket.emit('settingCurrentPlayer', player)
+            socket.to(roomname).broadcast.emit('settingCurrentPlayer', player)
+            socket.emit('makeOthelloTable', JSON.parse(othelloArray), player)
+            socket.to(roomname).broadcast.emit('makeOthelloTable', JSON.parse(othelloArray), player)
+        }
     })
     socket.on('startGame', async (elem_id, player, roomname) => {
         const x = Number(elem_id[0].slice(2))
         const y = Number(elem_id[1].slice(2))
         const othelloArray = await Redis.client.hget("othellos", roomname)
-
         // count place to put it
         const count = await rogic.countOthelloSet(JSON.parse(othelloArray), Number(player))
-
         if(count !== 0){
             // get updated othello
             const result = await rogic.allSettledOthello(x, y, JSON.parse(othelloArray), Number(player))
             // redis & Browser update
             if(othelloArray !== JSON.stringify(result)){
                 const updatedArray = await Redis.updateOthellosAndGetOthellos(roomname, result)
-                // Eventdelete
-                const clickEventArray = await rogic.arrayPutOnClickEventFunc(JSON.parse(othelloArray), player)
-                socket.emit('deleteEvent', clickEventArray)
-
                 player = 3 - Number(player)
                 await Redis.updatePlayerStatus(roomname, player)
 
-                // socket.to(roomname).emit('makeOthelloTable', JSON.parse(updatedArray), player)
                 socket.emit('makeOthelloTable', JSON.parse(updatedArray), player)
                 socket.to(roomname).broadcast.emit('makeOthelloTable', JSON.parse(updatedArray), player)
                 socket.emit('settingCurrentPlayer', player)
@@ -107,18 +103,9 @@ io.of('/Gamespace').on('connection', socket => {
             const nextplayerCount = await rogic.countOthelloSet(JSON.parse(othelloArray), Number(player))
             if(nextplayerCount === 0){
                 console.log("ゲーム終了")
-                // delete room data
-                await Promise.all([
-                    Redis.deleteRoomnamesOfRoomname(roomname),
-                    Redis.deleteOthellosRoom(roomname),
-                    Redis.deletePlayerStatus(roomname),
-                    Redis.deleteRoomStatus(roomname)
-                ])
                 // Mysqlに永続化
-
-                // fin
-                socket.emit('href', `/finished?name=${roomname}&player=${player}`)
-                socket.to(roomname).broadcast.emit('href', `/finished?name=${roomname}&player=${player}`)
+                socket.emit('finishEvent')
+                socket.to(roomname).emit('finishEvent')
             }else{
                 const reply = await Redis.updatePlayerStatus(roomname, player)
                 socket.emit('makeOthelloTable', JSON.parse(othelloArray), player)
@@ -128,9 +115,10 @@ io.of('/Gamespace').on('connection', socket => {
             }
         }
     })
-    socket.on('getClickEventArray', async (html, array, player) => {
+    socket.on('getClickEventArray', async (array, player, roomname) => {
         const clickEventArray = await rogic.arrayPutOnClickEventFunc(array, player)
-        socket.emit('showOthelloTable', `${html}`, clickEventArray)
+        const currentPlayer = await Redis.getPlayerStatus(roomname)
+        socket.emit('addClickEvent', clickEventArray, currentPlayer)
     })
     socket.on('disconnecting', async (reason) => {
         console.log(reason)
@@ -143,15 +131,45 @@ io.of('/Gamespace').on('connection', socket => {
         if(player1Id === dataWhenDisconnecting[0]){
             // delete処理
             await Redis.deleteRoomStatusOfPlayer(dataWhenDisconnecting[1], 1)
-            socket.to(socket.id).emit('connect')
+            socket.to(socket.id).emit('afterConnecting')
         }else if(player2Id === dataWhenDisconnecting[0]){
             await Redis.deleteRoomStatusOfPlayer(dataWhenDisconnecting[1], 2)
-            socket.to(socket.id).emit('connect')
+            socket.to(socket.id).emit('afterConnecting')
+        }
+    })
+    socket.on('lastSaveOthello', async (roomname, cb) => {
+        try{
+            const Mysql = require('./mysql.js')
+            const othelloArray = await Redis.client.hget("othellos", roomname)
+            console.log(othelloArray)
+            const result = await Mysql.insertRoomDatas(roomname, othelloArray)
+            // delete room data
+            await Promise.all([
+                Redis.deleteRoomnamesOfRoomname(roomname),
+                Redis.deleteOthellosRoom(roomname),
+                Redis.deletePlayerStatus(roomname),
+                Redis.deleteRoomStatus(roomname)
+            ])
+            cb(result)
+        }catch(err){
+            throw new Error('lastSaveOthello err', err)
+        }
+    })
+    socket.on('dontSaveOthello', async (roomname) => {
+        try{
+            await Promise.all([
+                Redis.deleteRoomnamesOfRoomname(roomname),
+                Redis.deleteOthellosRoom(roomname),
+                Redis.deletePlayerStatus(roomname),
+                Redis.deleteRoomStatus(roomname)
+            ])
+        }catch(err){
+            throw new Error('dontSaveOthello err', err)
         }
     })
 })
 
-io.of('/roomList').on('connection', async socket => {
+io.of('/roomList').on('connection', async (socket) => {
     const roomMembers = await Redis.getRoomnamesMembers()
     for (let room of roomMembers){
         socket.emit('setRoomNames', room)

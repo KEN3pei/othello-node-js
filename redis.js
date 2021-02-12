@@ -1,16 +1,16 @@
 // Redis接続
 const redis = require('ioredis')
-const Client = redis.createClient()
-// const Client = redis.createClient(6379, 'redis')
+// const Client = redis.createClient()
+const Client = redis.createClient(6379, 'redis')
 Client.on('connect', function() {
     console.log('Redisに接続しました')
 })
 Client.on('error', function (err) {
     console.log('次のエラーが発生しました：' + err)
 })
-module.exports.client = Client
+exports.client = Client
 // roomNames => [roomname, roomname, ...] で管理 Set型
-module.exports.addRoomnamesAndGetMembers = async (roomname) => {
+exports.addRoomnamesAndGetMembers = async (roomname) => {
     try{
         const reply = await Client.sadd(['roomNames', roomname])
         if(!reply){ throw new Error('エラー') }
@@ -20,7 +20,7 @@ module.exports.addRoomnamesAndGetMembers = async (roomname) => {
         throw new Error("err addRoomnamesAndGetMembers")
     }
 }
-module.exports.getRoomnamesMembers = async () =>{
+exports.getRoomnamesMembers = async () =>{
     try{
         const roomMembers = await Client.smembers('roomNames')
         return roomMembers
@@ -29,7 +29,7 @@ module.exports.getRoomnamesMembers = async () =>{
     }
 } 
 // roomNames内の特定のmemberが存在するか確認する
-module.exports.existCheckRoomnamesofMember = async (roomname) => {
+exports.existCheckRoomnamesofMember = async (roomname) => {
     try{
         const reply = await Client.sismember(['roomNames', roomname])
         if(!reply){ throw new Error()}
@@ -38,7 +38,7 @@ module.exports.existCheckRoomnamesofMember = async (roomname) => {
     }
 }
 // roomNames内のroomnameを削除する
-module.exports.deleteRoomnamesOfRoomname = async (roomname) => {
+exports.deleteRoomnamesOfRoomname = async (roomname) => {
     try{
         const reply = await Client.srem(['roomNames', roomname])
         return reply
@@ -49,7 +49,7 @@ module.exports.deleteRoomnamesOfRoomname = async (roomname) => {
 
 // othellos : { roomname : othelloArray} で管理 Hash型
 // 上書きするだけなのでエラーは出ないはず
-module.exports.updateOthellosAndGetOthellos = async (room, array) => {
+exports.updateOthellosAndGetOthellos = async (room, array) => {
     try{
         await Client.hmset(["othellos", room, JSON.stringify(array)])
         const othelloArray = await Client.hget("othellos", room)
@@ -59,7 +59,7 @@ module.exports.updateOthellosAndGetOthellos = async (room, array) => {
     }
 }
 // Othellosキー内にあるroomHASHを削除する
-module.exports.deleteOthellosRoom = async (roomname) => {
+exports.deleteOthellosRoom = async (roomname) => {
     try{
         const reply = await Client.hdel(["othellos", roomname])
         return reply
@@ -68,7 +68,7 @@ module.exports.deleteOthellosRoom = async (roomname) => {
     }
 }
 // redisにすでに値がなければ初期値をset&get, あればあるものをget
-module.exports.setIniarrayAndGetOthello = async (room, iniarray) => {
+exports.setIniarrayAndGetOthello = async (room, iniarray) => {
     try{
         await Client.hsetnx(["othellos", room, JSON.stringify(iniarray)])
         const othelloArray = await Client.hget("othellos", room)
@@ -79,7 +79,7 @@ module.exports.setIniarrayAndGetOthello = async (room, iniarray) => {
 }
 
 // roomname:{ player1,2 : socketId } で管理 Hash型
-module.exports.createRoomStatusAndGetRoomStatus = async (roomname, player, socketId) => {
+exports.createRoomStatusAndGetRoomStatus = async (roomname, player, socketId) => {
     try{
         const reply = await Client.hsetnx([roomname, player, socketId])
         // すでにそのroomにplayerがsetされている場合reject
@@ -90,7 +90,7 @@ module.exports.createRoomStatusAndGetRoomStatus = async (roomname, player, socke
     }
 }
 // 指定roomのplayer1か2のsocketId取得
-module.exports.getRoomStatus = async (roomname, player) => {
+exports.getRoomStatus = async (roomname, player) => {
     try{
         const reply = await Client.hget([roomname, player])
         return reply
@@ -98,7 +98,7 @@ module.exports.getRoomStatus = async (roomname, player) => {
         throw new Error('err getRoomStatus')
     }
 }
-module.exports.deleteRoomStatusOfPlayer = async (roomname, player) => {
+exports.deleteRoomStatusOfPlayer = async (roomname, player) => {
     try{
         const reply = await Client.hdel([roomname, player])
         return reply
@@ -106,7 +106,7 @@ module.exports.deleteRoomStatusOfPlayer = async (roomname, player) => {
         throw new Error('err deleteRoomStatusOfPlayer')
     }
 }
-module.exports.deleteRoomStatus = async (roomname) => {
+exports.deleteRoomStatus = async (roomname) => {
     try{
         const reply = await Client.del(roomname)
         return reply
@@ -116,7 +116,7 @@ module.exports.deleteRoomStatus = async (roomname) => {
 }
 
 // roomname で player を取得
-module.exports.getPlayerStatus = async (roomname) => {
+exports.getPlayerStatus = async (roomname) => {
     try{
         const playerStatus = await Client.hget(["players", roomname])
         return playerStatus
@@ -125,7 +125,7 @@ module.exports.getPlayerStatus = async (roomname) => {
     }
 }
 // roomname で player を設置 既存の値なら0, そうでなければ1
-module.exports.createPlayerStatus = async (roomname, player) => {
+exports.createPlayerStatus = async (roomname, player) => {
     try{
         const reply = await Client.hsetnx(["players", roomname, player])
         return reply // 1=true 0=false
@@ -134,7 +134,7 @@ module.exports.createPlayerStatus = async (roomname, player) => {
     }
 }
 // player を 1->2 もしくは 2->1 にする
-module.exports.updatePlayerStatus = async (roomname, player) => {
+exports.updatePlayerStatus = async (roomname, player) => {
     try{
         const reply = await Client.hset(["players", roomname, player])
         return reply // 新規->1 更新->0
@@ -143,7 +143,7 @@ module.exports.updatePlayerStatus = async (roomname, player) => {
     }
 }
 // 一致したplayer情報を削除
-module.exports.deletePlayerStatus = async (roomname) => {
+exports.deletePlayerStatus = async (roomname) => {
     try{
         const reply = await Client.hdel(["players", roomname])
         return reply // 存在している->1 していない->2

@@ -15,14 +15,17 @@ table {
     text-align: center;
 }
 .icon-white {
-    padding: 0 18%;
+    padding: 0 15px;
     background-color: #fff;
     border-radius: 50%;
 }
 .icon-black {
-    padding: 0 18%;
+    padding: 0 15px;
     background-color: #000;
     border-radius: 50%;
+}
+.icon-emsp {
+    padding: 0 15px;
 }
 .create-room-form, .rooms{
     text-align: center;
