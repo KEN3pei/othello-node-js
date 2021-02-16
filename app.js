@@ -137,6 +137,7 @@ io.of('/Gamespace').on('connection', socket => {
             socket.to(socket.id).emit('afterConnecting')
         }
     })
+
     socket.on('lastSaveOthello', async (roomname, cb) => {
         try{
             const Mysql = require('./mysql.js')

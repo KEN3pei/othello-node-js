@@ -49,8 +49,14 @@ socket.on('makeOthelloTable', (array, player) => {
 })
 
 socket.on('finishEvent', () => {
+    const {urlplayer} = getObjectFromurl()
+    console.log(typeof urlplayer)
     hiddenBtn()
-    visiblefinBtn()
+    if(urlplayer === '2'){
+        visiblefinBtn2()
+    }else{
+        visiblefinBtn()
+    }
 })
 
 socket.on('href', (url) => {
@@ -120,6 +126,10 @@ function visibleBtn(){
 
 function visiblefinBtn(){
     document.getElementById('finbtn').style.display = "block"
+}
+
+function visiblefinBtn2(){
+    document.getElementById('finbtn2').style.display = "block"
 }
 
 // データを保存せずに退出させる

@@ -3,6 +3,8 @@ html
   head
     title= title
     link(rel="stylesheet" href="./css/style.css" type="text/css")
+    link(rel="stylesheet" href="./css/header.css" type="text/css")
+  include ./header.pug
   body
     div.gameroom
       p Game Room
@@ -14,8 +16,10 @@ html
       div#btn(style={display: "none"} onclick="changePlayer()")
         button playerを変更
       div#finbtn(style={display: "none"})
-        button(onclick="exitWithoutSaving()") 保存せずに終了
-        button(onclick="saveAndExit()") 保存する
+        button(onclick="exitWithoutSaving()") 終了
+        button(onclick="saveAndExit()") 保存して終了
+      div#finbtn2(style={display: "none"})
+        button(onclick="exitWithoutSaving()") 終了
     script(src="/socket.io/socket.io.js")
-    script(src='./js/_frontFunc.js' type="text/javascript")
     script(src='./js/join.js' type="text/javascript")
+    script(src='./js/header.js' type="text/javascript")

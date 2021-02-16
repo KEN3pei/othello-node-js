@@ -2,14 +2,18 @@ doctype html
 html
   head
     title= title
-    link(rel="stylesheet" href="/css/style.css" type="text/css")
+    link(rel="stylesheet" href="./css/style.css" type="text/css")
+    link(rel="stylesheet" href="./css/header.css" type="text/css")
   body
-    div.create-room-form
-      label create Roomname : 
-      input#myroom(type="text" name="myRoom")
-      button(onclick="onClickSubmit()") create
-    div#addForm
-    div.rooms
-      ui#roomNames
+    include ./header.pug
+    div.wrap_rooms
+      div.create-room-form
+        label Game Room を作る : 
+        input#myroom(type="text" name="myRoom")
+        button(onclick="onClickSubmit()") 作る
+      div#addForm
+      div.rooms
+        ui#roomNames
     script(src="/socket.io/socket.io.js")
     script(src='/js/rooms.js' type="text/javascript")
+    script(src='./js/header.js' type="text/javascript")

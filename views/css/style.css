@@ -1,5 +1,9 @@
 body{
-    margin: 50px 25% 0 25%;
+    margin: 0;
+    /* margin: 50px 25% 0 25%; */
+}
+.wrap_rooms{
+    margin: 50px 25% 0 25%; 
 }
 table {
     margin: 0 auto;
@@ -29,14 +33,20 @@ table {
 }
 .create-room-form, .rooms{
     text-align: center;
+    margin: 40px 0;
+}
+.create-room-form > input{
+    padding: 4px 0;
+    margin-right: 10px;
 }
 
 .roomname{
     list-style: none;
     background-color: #e8e8e8;
-    margin: 1px 0;
+    margin: 5px 0;
     padding: 3px 0;
     cursor: pointer;
+    border-radius: 70px 70px 70px 70px;
 }
 .roomname:hover{
     opacity: 0.3;
