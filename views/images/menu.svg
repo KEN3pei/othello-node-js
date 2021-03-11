@@ -1,0 +1,21 @@
+<svg id="Outline" xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: none;
+      }
+
+      .cls-2 {
+        fill: #221815;
+      }
+    </style>
+  </defs>
+  <g>
+    <rect class="cls-1" width="40" height="40"/>
+    <g>
+      <path class="cls-2" d="M33,10H7A1,1,0,0,1,7,8H33a1,1,0,0,1,0,2Z"/>
+      <path class="cls-2" d="M33,21H7a1,1,0,0,1,0-2H33a1,1,0,0,1,0,2Z"/>
+      <path class="cls-2" d="M33,32H7a1,1,0,0,1,0-2H33a1,1,0,0,1,0,2Z"/>
+    </g>
+  </g>
+</svg>

@@ -1,0 +1,100 @@
+.header{
+    position: relative;
+    height: 100px;
+    width: 100%;
+    background-color: #303030;
+    display: flex;
+    justify-content: flex-end;
+}
+.header_ul{
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background-color: #303030;
+    list-style: none;
+    display:flex;
+    height:100px; /*.headerのheightに合わせる*/
+    margin: 0;
+    padding-right: 40px; /* defaultのul要素のpadding-leftが40pxなため*/
+    align-items: center;
+    display: none;
+}
+.header_ul > li{
+    flex: 1;
+    background-color: #33cc66;
+    padding: 25px 0;
+    margin: 2.5px;
+    cursor: pointer;
+    text-align: center;
+    border-radius: 70px 70px 70px 70px;
+}
+.header_ul > li:hover{
+    opacity: 0.7;
+}
+.header_ul > li > a{
+    display: block;
+    text-decoration: none;
+    color: #303030;
+}
+.menu_icon_ul{
+    background-color: #5c5c5c;
+    list-style: none;
+    display:flex;
+    height:100px;
+    margin: 0;
+    padding-right: 40px;
+    align-items: center;
+}
+.menu_icon, .close_icon{
+    background-color: antiquewhite;
+    cursor: pointer;
+}
+.close_icon{
+    display: none;
+}
+.menu_icon:hover, .close_icon:hover{
+    opacity: 0.7;
+}
+
+.hanbarger_menu_ul{
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    /* display: none; */
+}
+
+.menu_item{
+    background-color: antiquewhite;
+    padding:10px 30px;
+    margin:2.5px;
+    cursor: pointer;
+    display: none;
+}
+.menu_item:hover{
+    opacity: 0.7;
+}
+
+@media screen and (min-width:480px) { 
+    /*　画面サイズが480pxからはここを読み込む　*/
+
+}
+@media screen and (min-width:768px) and ( max-width:1024px) {
+    /*　画面サイズが768pxから1024pxまではここを読み込む　*/
+    .menu_icon_ul, .hanbarger_menu_ul{
+        display: none;
+    }
+    .header_ul{
+        display: flex;
+    }
+}
+@media screen and (min-width:1024px) {
+    /*　画面サイズが1024pxからはここを読み込む　*/
+    .menu_icon_ul, .hanbarger_menu_ul{
+        display: none;
+    }
+    .header_ul{
+        display: flex;
+    }
+}

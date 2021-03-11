@@ -24,7 +24,6 @@ app.get('/rooms', (req, res) => {
     res.render('rooms', { title: 'rooms' })
 })
 app.get('/finished', (req, res) => {
-    const roomname = req.query.name
     res.render('finished', { title: 'finished' })
 })
 
