@@ -1,0 +1,7 @@
+setup:
+  addons:
+  - plan: heroku-redis
+  - plan: cleardb
+build:
+  docker:
+    web: Dockerfile
