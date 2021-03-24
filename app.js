@@ -4,24 +4,39 @@ const express = require('express')
 const app = express()
 const http = require('http').Server(app)
 const io = require('socket.io')(http)
+const path = require('path');
+// global.app_root = __dirname;
 
 // jsファイルをmoduleとして読み込み
 const Redis = require('./redis.js')
-const rogic = require('./logic.js')
+const rogic = require('./src/logic.js')
+const globalFunc = require('./src/globalFunctions')
 const iniarray = rogic.iniArray()
 
-// 静的ファイル配信
-app.use(express.static(__dirname + '/views'))
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
-// テンプレート読み込み
-app.engine('pug', require('pug').__express) // docker環境だとこの行がないと表示されない
+// pugと静的ファイル読み込み
 app.set('view engine', 'pug')
+app.use(express.static(__dirname + '/views'))
+
 app.get('/join', (req, res) => {
     res.render('join', { title: 'join' })
 })
+app.get('/', (req, res) => {
+    res.render('rooms', { title: 'rooms' })
+})
 app.get('/rooms', (req, res) => {
     res.render('rooms', { title: 'rooms' })
+})
+
+// app.get('/vs-cpu', (req, res) => {
+//     res.render('vs-cpu', { title: 'vs-cpu' })
+// })
+app.get('/gameroom', (req, res) => {
+    // res.write(req.query.stringth)
+    // res.end('gemeroom')
+    const ini = globalFunc.pugMakeOthelloTable(iniarray)
+    res.render('gameroom', { title: 'gameroom', iniArray: JSON.stringify(ini) })
 })
 app.get('/finished', (req, res) => {
     res.render('finished', { title: 'finished' })

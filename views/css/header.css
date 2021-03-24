@@ -24,7 +24,6 @@
 .header_ul > li{
     flex: 1;
     background-color: #33cc66;
-    padding: 25px 0;
     margin: 2.5px;
     cursor: pointer;
     text-align: center;
@@ -37,6 +36,7 @@
     display: block;
     text-decoration: none;
     color: #303030;
+    padding: 25px 0;
 }
 .menu_icon_ul{
     background-color: #5c5c5c;

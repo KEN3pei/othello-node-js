@@ -1,11 +1,17 @@
 'use strict'
 // Mysql接続
 const mysql = require('mysql')
+// const connection = mysql.createConnection({
+//     host: 'mysql',
+//     user: 'root',
+//     password: 'root',
+//     database: 'othello'
+// })
 const connection = mysql.createConnection({
-    host: 'mysql',
-    user: 'root',
-    password: 'root',
-    database: 'othello'
+    host: 'us-cdbr-east-03.cleardb.com',
+    user: 'b62c8e3370487e',
+    password: 'edbd4565',
+    database: 'heroku_b37543f4d438914'
 })
 // 数秒後に接続しないと hundshake error みたいなんがでる
 connection.connect()

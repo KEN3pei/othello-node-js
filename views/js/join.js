@@ -36,9 +36,9 @@ socket.on('makeOthelloTable', (array, player) => {
         if(Number(currentPlayer) === Number(urlplayer)){
             if(clickEventArray.length === 0){
                 socket.emit('getMessage', '置くところがないのでplayerを交代します')
-                visibleBtn()
+                visibleBtn('btn')
             }else{
-                hiddenBtn()
+                hiddenBtn('btn')
             }
             for (let index = 0; index < clickEventArray.length; index++) {
                 let id = `x:${clickEventArray[index][1]},y:${clickEventArray[index][0]}`
@@ -50,17 +50,15 @@ socket.on('makeOthelloTable', (array, player) => {
 
 socket.on('finishEvent', () => {
     const {urlplayer} = getObjectFromurl()
-    console.log(typeof urlplayer)
-    hiddenBtn()
+    hiddenBtn('btn')
     if(urlplayer === '2'){
-        visiblefinBtn2()
+        visibleBtn('finbtn2')
     }else{
-        visiblefinBtn()
+        visibleBtn('finbtn')
     }
 })
 
 socket.on('href', (url) => {
-    console.log(url)
     window.location.href = `${url}`
 })
 
@@ -70,28 +68,7 @@ socket.on('href', (url) => {
 function changePlayer(){
     const {urlplayer, roomname} = getObjectFromurl()
     socket.emit('chengePlayerFunc', roomname, urlplayer)
-    hiddenBtn()
-}
-
-// rooms.htmlにて表示される
-function makeOthelloTable(array){
-    let html = "<table border='1'>"
-    for (let y = 1; y < 5 ; y++) {
-        html += "<tr>"
-        for (let x = 1; x < 5 ; x++) {
-            let x_y = `x:${x},y:${y}`
-            if(array[y][x] === 1){
-                html += `<td id = "${x_y}" class="icon othello"><span class="icon-black"></span></td>`
-            }else if(array[y][x] === 2){
-                html += `<td id = "${x_y}" class="icon othello"><span class="icon-white"></span></td>`
-            }else{
-                html += `<td id = "${x_y}" class="icon othello"><span class="icon-emsp"></span></td>`
-            }
-        }
-        html += "</tr>"
-    }
-    html += "</table>"
-    return html
+    hiddenBtn('btn')
 }
 
 function getXandY(){
@@ -114,22 +91,6 @@ function getObjectFromurl(){
     const player = urlArray[1].slice(7)
     const roomname = urlArray[0].slice(5)
     return {urlplayer: player, roomname: roomname}
-}
-
-function hiddenBtn(){
-    document.getElementById('btn').style.display = "none"
-}
-
-function visibleBtn(){
-    document.getElementById('btn').style.display = "block"
-}
-
-function visiblefinBtn(){
-    document.getElementById('finbtn').style.display = "block"
-}
-
-function visiblefinBtn2(){
-    document.getElementById('finbtn2').style.display = "block"
 }
 
 // データを保存せずに退出させる
