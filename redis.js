@@ -2,7 +2,8 @@
 const redis = require('ioredis')
 // const Client = redis.createClient()
 if(process.env.REDIS_URL){
-    var Client = new Redis(process.env.REDIS_URL)
+    // var Client = new Redis(process.env.REDIS_URL)
+    var Client = redis.createClient(process.env.REDIS_URL)
 }else{
     var Client = redis.createClient(6379, 'redis')
 }
