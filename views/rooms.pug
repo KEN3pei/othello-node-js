@@ -11,9 +11,10 @@ html
         label Game Room を作る : 
         input#myroom(type="text" name="myRoom")
         button(onclick="onClickSubmit()") 作る
+        p （ここから入るとPlayer1）
       div#addForm
       div.rooms
-        p 作られたGameRoom一覧
+        p 作られたGameRoom一覧（ここから入るとPlayer2）
         ui#roomNames
     script(src="/socket.io/socket.io.js")
     script(src='/js/rooms.js' type="text/javascript")
