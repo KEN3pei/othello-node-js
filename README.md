@@ -14,3 +14,6 @@
 
 ### 使用技術
  Node.js Express Socket.io Redis Mysql
+
+### herokuでデプロイしたやつ
+ https://realtime-othello-game.herokuapp.com/rooms
